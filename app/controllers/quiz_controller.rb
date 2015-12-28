@@ -55,7 +55,7 @@ class QuizController < ApplicationController
     words = question.split(' ')
     words.each do |word|
       new_question = question.sub word, '%WORD%'
-      answer = find_missed_words(new_question)
+      answer = find_missed_words new_question
       unless answer.empty?
         answer.delete! '.,!?:;()'
         word.delete! '.,!?:;()'
@@ -71,10 +71,15 @@ class QuizController < ApplicationController
   def find_missed_words(question)
     answer = []
     lines = question.split("\n")
-    lines.each do |line|
+    parts_of_first_line = lines[0].partition '%WORD%'
+    text = find_poem_with_missed_word(parts_of_first_line).try :content
+    unless text
+      return ""
+    end
+    answer.push find_missed_word_in_poem(text, parts_of_first_line)
+    lines.drop(1).each do |line|
       parts = line.partition '%WORD%'
-      content = find_poem_with_missed_word(parts).try :content
-      answer.push find_missed_word_in_poem(content, parts)
+      answer.push find_missed_word_in_poem(text, parts)
     end
     answer.join(',')
   end
