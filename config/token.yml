@@ -1,7 +1,0 @@
----
-development:
-  USER_TOKEN: tok
-test:
-  USER_TOKEN: abcdefg
-production:
-  USER_TOKEN: production_token

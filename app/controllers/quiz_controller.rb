@@ -6,37 +6,90 @@ class QuizController < ApplicationController
   end
 
   def answer
+    level = params[:level]
+    question = params[:question]
+    id = params[:id]
+    level_str = level.to_s
+    case level_str
+    when '1'
+      answer = find_out_title_of_the_poem question
+    when '2'..'4'
+      answer = find_missed_words question
+    when '5'
+      answer = find_correct_and_wrong_word question
+    else
+      answer = nil
+    end
+    send_answer answer, id
+    render json: {
+      answer: answer,
+      token: Token.last.value,
+      task_id: id
+    }
   end
   
   def registration
-    token = params[:token]
+    value = params[:token]
     question = params[:question]
-    data = YAML.load_file("#{Rails.root}/config/token.yml")
-    data[Rails.env]['USER_TOKEN'] = token
-    File.open("#{Rails.root}/config/token.yml", 'w') { |f| YAML.dump(data, f) }
+    token = Token.new
+    token.value = value
+    token.save
     answer = 'снежные'
     render json: {answer: answer}
   end
 
   private
 
-  def find_answer_on_question_level_2(line)
-    splited = line.partition '%WORD%'
-    text = find_poem_with_replaced_word(splited).try :content
-    find_replaced_word_in_poem(text, splited)
+  URI = URI("http://pushkin.rubyroid.by/quiz")
+
+  def send_answer(answer, id)
+    parameters = {
+      answer: answer,
+      token: Token.last.value,
+      task_id: id
+    }
+    Net::HTTP.post_form(URI, parameters)
   end
 
-  def find_poem_with_replaced_word(splited)
-    Poem.where('content ~* ?', splited[0] + '[А-Яа-я]*' + splited[2]).first
+  def find_correct_and_wrong_word(question)
+    words = question.split(' ')
+    words.each do |word|
+      new_question = question.sub word, '%WORD%'
+      answer = find_missed_words(new_question)
+      unless answer.empty?
+        answer.delete! '.,!?:;()'
+        word.delete! '.,!?:;()'
+        return "#{answer},#{word}"
+      end
+    end
   end
 
-  def find_replaced_word_in_poem(text, splited)
-    if splited[0].empty?
-      text.split(splited[2])[0].split(/\s|"|\(/)[-1] if text
-    elsif splited[2].empty?
-      text.split(splited[0])[1].split(/\s|,|\.|\?|!|:|;|\(|\)|"/)[0] if text
+  def find_out_title_of_the_poem(question)
+    Poem.where("content ~* ?", question).first.try :title
+  end
+
+  def find_missed_words(question)
+    answer = []
+    lines = question.split("\n")
+    lines.each do |line|
+      parts = line.partition '%WORD%'
+      content = find_poem_with_missed_word(parts).try :content
+      answer.push find_missed_word_in_poem(content, parts)
+    end
+    answer.join(',')
+  end
+
+  def find_poem_with_missed_word(parts)
+    Poem.where('content ~* ?', parts[0] + '[А-Яа-я]*' + parts[2]).first
+  end
+
+  def find_missed_word_in_poem(content, parts)
+    if parts[0].empty?
+      content.split(parts[2])[0].split(/\s|"|\(/)[-1] if content
+    elsif parts[2].empty?
+      content.split(parts[0])[1].split(/\s|,|\.|\?|!|:|;|\(|\)|"/)[0] if content
     else
-      text.split(splited[0])[1].split(splited[2])[0] if text   
+      content.split(parts[0])[1].split(parts[2])[0] if content
     end
   end
 end
