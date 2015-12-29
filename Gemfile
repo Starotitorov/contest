@@ -28,6 +28,8 @@ gem 'puma'
 gem 'mechanize'
 
 gem 'colorize'
+
+gem 'unicode_utils'
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 

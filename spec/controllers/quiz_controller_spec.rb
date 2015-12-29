@@ -45,12 +45,19 @@ RSpec.describe QuizController, type: :controller do
       answer = JSON.parse(response.body)["answer"]
       expect(answer).to eq("Мой,порывы,верь")
     end
-    it "should give right answer on question level 4" do
+    it "should give right answer on question level 5" do
       post :answer, question: "Души прекрасные надежды!", id: 4, level: 5,
             format: :json
       answer = JSON.parse(response.body)["answer"]
       expect(answer).to eq("порывы,надежды")
     end
+    it "should give right answer on question level 6" do
+      post :answer, question: "шуДи ерпрксанеы опырвы", id: 5, level: 6,
+            format: :json
+      answer = JSON.parse(response.body)["answer"]
+      expect(answer).to eq("Души прекрасные порывы")
+    end
+
   end
 
 end
