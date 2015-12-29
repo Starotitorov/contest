@@ -19,8 +19,12 @@ class QuizController < ApplicationController
       answer = find_correct_and_wrong_word question
     when '6'
       answer = find_line_with_correct_order_of_letters_in_words question
+    when '7'
+      answer = find_line_with_correct_order_of_letters question
+    when '8'
+      answer = find_line_with_replaced_letter_and_correct_order_of_letters question
     else
-      answer = nil
+      answer = "Unknown level"
     end
     send_answer answer, id
     render json: {
@@ -59,8 +63,8 @@ class QuizController < ApplicationController
       new_question = question.sub word, '%WORD%'
       answer = find_missed_words new_question
       unless answer.empty?
-        answer.delete! '.,!?:;()'
-        word.delete! '.,!?:;()'
+        answer.delete! '.,!?:;()—'
+        word.delete! '.,!?:;()—'
         return "#{answer},#{word}"
       end
     end
@@ -99,7 +103,7 @@ class QuizController < ApplicationController
     end
     Poem.find_each(batch_size: 100) do |poem|
       poem.content.split("\n").each do |line|
-        line.delete! '.,!?:;()'
+        line.delete! '.,!?:;()—'
         new_line = line.mb_chars.downcase.to_s
         words = new_line.split
         words.each_index do |ind|
@@ -110,6 +114,59 @@ class QuizController < ApplicationController
         end
         if words == words_with_incorrect_order_of_letters
           return line
+        end
+      end
+    end
+  end
+
+  def find_line_with_correct_order_of_letters(question)
+    new_question = question.mb_chars.downcase.chars.sort.join
+    Poem.find_each(batch_size: 100) do |poem|
+      poem.content.split("\n").each do |line|
+        line.delete! '.,!?:;()—'
+        if line.length != question.length
+          next
+        end
+        new_line = line.mb_chars.downcase.chars.sort.join
+        if new_line == new_question
+          return line
+        end
+      end
+    end
+  end
+
+  def find_line_with_replaced_letter_and_correct_order_of_letters(question)
+    new_question = question.mb_chars.downcase.chars.sort.join
+    Poem.find_each(batch_size: 100) do |poem|
+      poem.content.split("\n").each do |line|
+        line.delete! '.,!?:;()—'
+        if line.length != question.length
+          next
+        end
+        new_line = line.mb_chars.downcase.chars.sort.join
+        previous_letter = nil
+        array_of_chars_in_line = new_line.chars
+        amount_of_substitutions = 0
+        array_of_chars_in_line.each_index do |ind|
+          if array_of_chars_in_line[ind] == new_question[ind]
+            next
+          else
+            if previous_letter == array_of_chars_in_line[ind] &&
+                amount_of_substitutions == 1
+              array_of_chars_in_line[ind] = new_question[ind]
+              if array_of_chars_in_line.join == new_question
+                return line
+              end
+            end
+            array_of_chars_in_line[ind] = new_question[ind]
+            previous_letter = new_question[ind]
+            ++amount_of_substitutions
+            if array_of_chars_in_line.join == new_question
+              return line
+            else
+              break
+            end
+          end
         end
       end
     end

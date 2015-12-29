@@ -1,6 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe QuizController, type: :controller do
+
   describe "#registration" do
     before { FactoryGirl.create(:poem).save }
     it "should complete registration" do
@@ -40,24 +41,35 @@ RSpec.describe QuizController, type: :controller do
       expect(answer).to eq("счастья,вспрянет")
     end
     it "should give right answer on question level 4" do
-      post :answer, question: "%WORD% друг, отчизне посвятим\nДуши прекрасные %WORD%!\nТоварищ, %WORD%: взойдет она,", id: 3, level: 4,
+      post :answer, question: "%WORD% друг, отчизне посвятим\nДуши прекрасные %WORD%!\nТоварищ, %WORD%: взойдет она,", id: 4, level: 4,
             format: :json
       answer = JSON.parse(response.body)["answer"]
       expect(answer).to eq("Мой,порывы,верь")
     end
     it "should give right answer on question level 5" do
-      post :answer, question: "Души прекрасные надежды!", id: 4, level: 5,
+      post :answer, question: "Души прекрасные надежды!", id: 5, level: 5,
             format: :json
       answer = JSON.parse(response.body)["answer"]
       expect(answer).to eq("порывы,надежды")
     end
     it "should give right answer on question level 6" do
-      post :answer, question: "шуДи ерпрксанеы опырвы", id: 5, level: 6,
+      post :answer, question: "шуДи ерпрксанеы опырвы", id: 6, level: 6,
             format: :json
       answer = JSON.parse(response.body)["answer"]
       expect(answer).to eq("Души прекрасные порывы")
     end
-
+    it "should give right answer on question level 7" do
+      post :answer, question: "шуДе ирпрксаоеы нпырвы", id: 7, level: 7,
+            format: :json
+      answer = JSON.parse(response.body)["answer"]
+      expect(answer).to eq("Души прекрасные порывы")
+    end
+    it "should give right answer on question level 8" do
+      post :answer, question: "шуДе ирпрксбоеы нпырвы", id: 8, level: 8,
+            format: :json
+      answer = JSON.parse(response.body)["answer"]
+      expect(answer).to eq("Души прекрасные порывы")
+    end
   end
 
 end
