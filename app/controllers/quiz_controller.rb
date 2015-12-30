@@ -158,17 +158,38 @@ class QuizController < ApplicationController
   end
 
   def find_line_with_replaced_letter_and_correct_order_of_letters(question)
-    new_question = question.mb_chars.downcase.chars.sort.join
+    hash_of_letters_in_question = Hash.new(0)
+    question.mb_chars.downcase.chars.each do |letter|
+      hash_of_letters_in_question[letter] += 1
+    end
     Poem.find_each(batch_size: 100) do |poem|
       poem.content.split("\n").each do |line|
         line.delete! '.,!?:;()—'
         if line.length != question.length
           next
         end
-        new_line = line.mb_chars.downcase.chars.sort.join
-        array_of_letters = new_line.chars - new_question.chars
-        if array_of_letters.length == 1
-          return line
+        new_line = line.mb_chars.downcase.to_s
+        hash_of_letters_in_line = Hash.new(0)
+        new_line.chars.each { |letter| hash_of_letters_in_line[letter] += 1 }
+        arr = hash_of_letters_in_line.to_a - hash_of_letters_in_question.to_a
+        if arr.count < 3
+          #pp hash_of_letters_in_line.to_a - hash_of_letters_in_question.to_a
+          #pp hash_of_letters_in_question
+          #pp hash_of_letters_in_line
+          flag = true
+          arr.each do |a|
+            if (a[1] - hash_of_letters_in_question[a[0]]).abs > 1 && arr.length == 2
+              flag = false
+              break
+            end
+            if (a[1] - hash_of_letters_in_question[a[0]]).abs > 2 && arr.length == 1
+              flag = false
+              break
+            end
+          end
+          if flag
+            return line
+          end
         end
       end
     end
