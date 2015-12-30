@@ -101,38 +101,60 @@ class QuizController < ApplicationController
       words_with_incorrect_order_of_letters[ind] =
           words_with_incorrect_order_of_letters[ind].chars.sort.join
     end
-    Poem.find_each(batch_size: 100) do |poem|
-      poem.content.split("\n").each do |line|
-        line.delete! '.,!?:;()—'
-        new_line = line.mb_chars.downcase.to_s
-        words = new_line.split
-        words.each_index do |ind|
-          words[ind] = words[ind].chars.sort.join
-          if words[ind] != words_with_incorrect_order_of_letters[ind]
-            break
-          end
-        end
-        if words == words_with_incorrect_order_of_letters
-          return line
-        end
+    required_line = words_with_incorrect_order_of_letters.join(" ")
+    text = Poem.find_by("content_with_sorted_letters_in_words ~* ?",
+        required_line).try :content
+    text.split("\n").each do |line|
+      line.delete! '.,!?:;()—'
+      new_line = line.mb_chars.downcase.to_s
+      words = new_line.split
+      words.each_index do |ind|
+        words[ind] = words[ind].chars.sort.join
+      end
+      if words.join(" ") == required_line
+        return line
       end
     end
+    #Poem.find_each(batch_size: 100) do |poem|
+    #  poem.content.split("\n").each do |line|
+    #    line.delete! '.,!?:;()—'
+    #    new_line = line.mb_chars.downcase.to_s
+    #    words = new_line.split
+    #    words.each_index do |ind|
+    #      words[ind] = words[ind].chars.sort.join
+    #      if words[ind] != words_with_incorrect_order_of_letters[ind]
+    #        break
+    #      end
+    #    end
+    #    if words == words_with_incorrect_order_of_letters
+    #      return line
+    #    end
+    #  end
+    #end
   end
 
   def find_line_with_correct_order_of_letters(question)
     new_question = question.mb_chars.downcase.chars.sort.join
-    Poem.find_each(batch_size: 100) do |poem|
-      poem.content.split("\n").each do |line|
-        line.delete! '.,!?:;()—'
-        if line.length != question.length
-          next
-        end
-        new_line = line.mb_chars.downcase.chars.sort.join
-        if new_line == new_question
-          return line
-        end
+    text = Poem.find_by("content_with_sorted_letters_in_lines ~* ?", new_question).try :content
+    text.split("\n").each do |line|
+      line.delete! '.,!?:;()—'
+      new_line = line.mb_chars.downcase.chars.sort.join
+      if new_line == new_question
+        return line
       end
     end
+    #Poem.find_each(batch_size: 100) do |poem|
+    #  poem.content.split("\n").each do |line|
+    #    line.delete! '.,!?:;()—'
+    #    if line.length != question.length
+    #      next
+    #    end
+    #    new_line = line.mb_chars.downcase.chars.sort.join
+    #    if new_line == new_question
+    #      return line
+    #    end
+    #  end
+    #end
   end
 
   def find_line_with_replaced_letter_and_correct_order_of_letters(question)
@@ -144,29 +166,9 @@ class QuizController < ApplicationController
           next
         end
         new_line = line.mb_chars.downcase.chars.sort.join
-        previous_letter = nil
-        array_of_chars_in_line = new_line.chars
-        amount_of_substitutions = 0
-        array_of_chars_in_line.each_index do |ind|
-          if array_of_chars_in_line[ind] == new_question[ind]
-            next
-          else
-            if previous_letter == array_of_chars_in_line[ind] &&
-                amount_of_substitutions == 1
-              array_of_chars_in_line[ind] = new_question[ind]
-              if array_of_chars_in_line.join == new_question
-                return line
-              end
-            end
-            array_of_chars_in_line[ind] = new_question[ind]
-            previous_letter = new_question[ind]
-            ++amount_of_substitutions
-            if array_of_chars_in_line.join == new_question
-              return line
-            else
-              break
-            end
-          end
+        array_of_letters = new_line.chars - new_question.chars
+        if array_of_letters.length == 1
+          return line
         end
       end
     end

@@ -17,9 +17,12 @@ RSpec.describe QuizController, type: :controller do
   end
 
   describe "#answer" do
+    let(:text) { "Любви, надежды, тихой славы\nНедолго нежил нас обман,\nИсчезли юные забавы,\nКак сон, как утренний туман;\nНо в нас горит еще желанье,\nПод гнетом власти роковой\nНетерпеливою душой\nОтчизны внемлем призыванье.\nМы ждем с томленьем упованья\nМинуты вольности святой,\nКак ждет любовник молодой\nМинуты верного свиданья.\nПока свободою горим,\nПока сердца для чести живы,\nМой друг, отчизне посвятим\nДуши прекрасные порывы!\nТоварищ, верь: взойдет она,\nЗвезда пленительного счастья,\nРоссия вспрянет ото сна,\nИ на обломках самовластья\nНапишут наши имена!\n" }
     before do
       FactoryGirl.create(:poem, title: "К Чаадаеву", 
-      content: "Любви, надежды, тихой славы\nНедолго нежил нас обман,\nИсчезли юные забавы,\nКак сон, как утренний туман;\nНо в нас горит еще желанье,\nПод гнетом власти роковой\nНетерпеливою душой\nОтчизны внемлем призыванье.\nМы ждем с томленьем упованья\nМинуты вольности святой,\nКак ждет любовник молодой\nМинуты верного свиданья.\nПока свободою горим,\nПока сердца для чести живы,\nМой друг, отчизне посвятим\nДуши прекрасные порывы!\nТоварищ, верь: взойдет она,\nЗвезда пленительного счастья,\nРоссия вспрянет ото сна,\nИ на обломках самовластья\nНапишут наши имена!\n").save
+      content: text,
+      content_with_sorted_letters_in_lines: FactoryHelpers.build_content_with_sorted_letters_in_lines(text), 
+      content_with_sorted_letters_in_words: FactoryHelpers.build_content_with_sorted_letters_in_words(text)).save
       Token.create(value: 'abcdefg')
     end
     it "should give right answer on question level 1" do 
@@ -65,7 +68,7 @@ RSpec.describe QuizController, type: :controller do
       expect(answer).to eq("Души прекрасные порывы")
     end
     it "should give right answer on question level 8" do
-      post :answer, question: "шуДе ирпрксбоеы нпырвы", id: 8, level: 8,
+      post :answer, question: "штДе ирпрксаоеы нпырвы", id: 8, level: 8,
             format: :json
       answer = JSON.parse(response.body)["answer"]
       expect(answer).to eq("Души прекрасные порывы")
