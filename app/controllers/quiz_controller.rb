@@ -102,19 +102,23 @@ class QuizController < ApplicationController
           words_with_incorrect_order_of_letters[ind].chars.sort.join
     end
     required_line = words_with_incorrect_order_of_letters.join(" ")
-    text = Poem.find_by("content_with_sorted_letters_in_words ~* ?",
-        required_line).try :content
-    text.split("\n").each do |line|
-      line.delete! '.,!?:;()—'
-      new_line = line.mb_chars.downcase.to_s
-      words = new_line.split
-      words.each_index do |ind|
-        words[ind] = words[ind].chars.sort.join
-      end
-      if words.join(" ") == required_line
-        return line
-      end
-    end
+    poem = Poem.find_by("content_with_sorted_letters_in_words ~* ?",
+        required_line)
+    text = poem.content
+    text_with_sorted_letters_in_words =poem.content_with_sorted_letters_in_words
+    index = text_with_sorted_letters_in_words.split("\n").index(required_line)
+    text.split("\n")[index].delete! '.,!?:;()—'
+    #text.split("\n").each do |line|
+    #  line.delete! '.,!?:;()—'
+    #  new_line = line.mb_chars.downcase.to_s
+    #  words = new_line.split
+    #  words.each_index do |ind|
+    #    words[ind] = words[ind].chars.sort.join
+    #  end
+    #  if words.join(" ") == required_line
+    #    return line
+    #  end
+    #end
     #Poem.find_each(batch_size: 100) do |poem|
     #  poem.content.split("\n").each do |line|
     #    line.delete! '.,!?:;()—'
@@ -135,14 +139,18 @@ class QuizController < ApplicationController
 
   def find_line_with_correct_order_of_letters(question)
     new_question = question.mb_chars.downcase.chars.sort.join
-    text = Poem.find_by("content_with_sorted_letters_in_lines ~* ?", new_question).try :content
-    text.split("\n").each do |line|
-      line.delete! '.,!?:;()—'
-      new_line = line.mb_chars.downcase.chars.sort.join
-      if new_line == new_question
-        return line
-      end
-    end
+    poem = Poem.find_by("content_with_sorted_letters_in_lines ~* ?", new_question)
+    text = poem.content
+    text_with_sorted_letters_in_lines=poem.content_with_sorted_letters_in_lines
+    index = text_with_sorted_letters_in_lines.split("\n").index(new_question)
+    text.split("\n")[index].delete! '.,!?:;()—'
+    #text.split("\n").each do |line|
+    #  line.delete! '.,!?:;()—'
+    #  new_line = line.mb_chars.downcase.chars.sort.join
+    #  if new_line == new_question
+    #    return line
+    #  end
+    #end
     #Poem.find_each(batch_size: 100) do |poem|
     #  poem.content.split("\n").each do |line|
     #    line.delete! '.,!?:;()—'
@@ -173,9 +181,6 @@ class QuizController < ApplicationController
         new_line.chars.each { |letter| hash_of_letters_in_line[letter] += 1 }
         arr = hash_of_letters_in_line.to_a - hash_of_letters_in_question.to_a
         if arr.count < 3
-          #pp hash_of_letters_in_line.to_a - hash_of_letters_in_question.to_a
-          #pp hash_of_letters_in_question
-          #pp hash_of_letters_in_line
           flag = true
           arr.each do |a|
             if (a[1] - hash_of_letters_in_question[a[0]]).abs > 1 && arr.length == 2

@@ -1,10 +1,9 @@
 Rails.application.routes.draw do
   root 'quiz#home'
-
+  
   post '/registration', to: 'quiz#registration'
 
   post '/quiz', to: 'quiz#answer'
-
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
