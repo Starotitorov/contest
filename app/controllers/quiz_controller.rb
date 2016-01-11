@@ -176,7 +176,7 @@ class QuizController < ApplicationController
     question.mb_chars.downcase.chars.each do |letter|
       hash_of_letters_in_question[letter] += 1
     end
-    Poem.find_each(batch_size: 100) do |poem|
+    Poem.find_each(batch_size: 1000) do |poem|
       poem.content.split("\n").each do |line|
         line.delete! '.,!?:;()—'
         if line.length != question.length
