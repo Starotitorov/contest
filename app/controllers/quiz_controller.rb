@@ -95,52 +95,19 @@ class QuizController < ApplicationController
   end
 
   def find_line_with_correct_order_of_letters_in_words(question)
-    new_question = question.mb_chars.downcase.chars.sort.join
-    poem = Poem.find_by("content_with_sorted_letters_in_lines ~* ?", new_question)
+    new_question = question.mb_chars.downcase.to_s
+    words_with_incorrect_order_of_letters = new_question.split
+    words_with_incorrect_order_of_letters.each_index do |ind|
+      words_with_incorrect_order_of_letters[ind] =
+          words_with_incorrect_order_of_letters[ind].chars.sort.join
+    end
+    required_line = words_with_incorrect_order_of_letters.join(" ")
+    poem = Poem.find_by("content_with_sorted_letters_in_words ~* ?",
+        required_line)
     text = poem.content
-    text_with_sorted_letters_in_lines=poem.content_with_sorted_letters_in_lines
-    index = text_with_sorted_letters_in_lines.split("\n").index(new_question)
+    text_with_sorted_letters_in_words =poem.content_with_sorted_letters_in_words
+    index = text_with_sorted_letters_in_words.split("\n").index(required_line)
     text.split("\n")[index].delete! '.,!?:;()—'
-    #new_question = question.mb_chars.downcase.to_s
-    #words_with_incorrect_order_of_letters = new_question.split
-    #words_with_incorrect_order_of_letters.each_index do |ind|
-    #  words_with_incorrect_order_of_letters[ind] =
-    #      words_with_incorrect_order_of_letters[ind].chars.sort.join
-    #end
-    #required_line = words_with_incorrect_order_of_letters.join(" ")
-    #poem = Poem.find_by("content_with_sorted_letters_in_words ~* ?",
-    #    required_line)
-    #text = poem.content
-    #text_with_sorted_letters_in_words =poem.content_with_sorted_letters_in_words
-    #index = text_with_sorted_letters_in_words.split("\n").index(required_line)
-    #text.split("\n")[index].delete! '.,!?:;()—'
-    #text.split("\n").each do |line|
-    #  line.delete! '.,!?:;()—'
-    #  new_line = line.mb_chars.downcase.to_s
-    #  words = new_line.split
-    #  words.each_index do |ind|
-    #    words[ind] = words[ind].chars.sort.join
-    #  end
-    #  if words.join(" ") == required_line
-    #    return line
-    #  end
-    #end
-    #Poem.find_each(batch_size: 100) do |poem|
-    #  poem.content.split("\n").each do |line|
-    #    line.delete! '.,!?:;()—'
-    #    new_line = line.mb_chars.downcase.to_s
-    #    words = new_line.split
-    #    words.each_index do |ind|
-    #      words[ind] = words[ind].chars.sort.join
-    #      if words[ind] != words_with_incorrect_order_of_letters[ind]
-    #        break
-    #      end
-    #    end
-    #    if words == words_with_incorrect_order_of_letters
-    #      return line
-    #    end
-    #  end
-    #end
   end
 
   def find_line_with_correct_order_of_letters(question)
@@ -150,25 +117,6 @@ class QuizController < ApplicationController
     text_with_sorted_letters_in_lines=poem.content_with_sorted_letters_in_lines
     index = text_with_sorted_letters_in_lines.split("\n").index(new_question)
     text.split("\n")[index].delete! '.,!?:;()—'
-    #text.split("\n").each do |line|
-    #  line.delete! '.,!?:;()—'
-    #  new_line = line.mb_chars.downcase.chars.sort.join
-    #  if new_line == new_question
-    #    return line
-    #  end
-    #end
-    #Poem.find_each(batch_size: 100) do |poem|
-    #  poem.content.split("\n").each do |line|
-    #    line.delete! '.,!?:;()—'
-    #    if line.length != question.length
-    #      next
-    #    end
-    #    new_line = line.mb_chars.downcase.chars.sort.join
-    #    if new_line == new_question
-    #      return line
-    #    end
-    #  end
-    #end
   end
 
   def find_line_with_replaced_letter_and_correct_order_of_letters(question)
